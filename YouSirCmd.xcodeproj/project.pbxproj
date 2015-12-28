@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		8141DA9C1C316FF000C46919 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 8141DA9B1C316FF000C46919 /* main.c */; };
+		8141DAB51C31709400C46919 /* libuv_mac.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8141DAB41C31709400C46919 /* libuv_mac.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +26,12 @@
 /* Begin PBXFileReference section */
 		8141DA981C316FF000C46919 /* YouSirCmd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = YouSirCmd; sourceTree = BUILT_PRODUCTS_DIR; };
 		8141DA9B1C316FF000C46919 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		8141DAA81C31709400C46919 /* tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tree.h; sourceTree = "<group>"; };
+		8141DAAC1C31709400C46919 /* uv-errno.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-errno.h"; sourceTree = "<group>"; };
+		8141DAB01C31709400C46919 /* uv-unix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-unix.h"; sourceTree = "<group>"; };
+		8141DAB11C31709400C46919 /* uv-version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-version.h"; sourceTree = "<group>"; };
+		8141DAB31C31709400C46919 /* uv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uv.h; sourceTree = "<group>"; };
+		8141DAB41C31709400C46919 /* libuv_mac.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libuv_mac.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +39,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8141DAB51C31709400C46919 /* libuv_mac.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -41,6 +49,7 @@
 		8141DA8F1C316FF000C46919 = {
 			isa = PBXGroup;
 			children = (
+				8141DAA21C31707C00C46919 /* Frameworks */,
 				8141DA9A1C316FF000C46919 /* YouSirCmd */,
 				8141DA991C316FF000C46919 /* Products */,
 			);
@@ -60,6 +69,35 @@
 				8141DA9B1C316FF000C46919 /* main.c */,
 			);
 			path = YouSirCmd;
+			sourceTree = "<group>";
+		};
+		8141DAA21C31707C00C46919 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8141DAA31C31709400C46919 /* libuv */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		8141DAA31C31709400C46919 /* libuv */ = {
+			isa = PBXGroup;
+			children = (
+				8141DAA41C31709400C46919 /* include */,
+				8141DAB41C31709400C46919 /* libuv_mac.a */,
+			);
+			path = libuv;
+			sourceTree = "<group>";
+		};
+		8141DAA41C31709400C46919 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				8141DAA81C31709400C46919 /* tree.h */,
+				8141DAAC1C31709400C46919 /* uv-errno.h */,
+				8141DAB01C31709400C46919 /* uv-unix.h */,
+				8141DAB11C31709400C46919 /* uv-version.h */,
+				8141DAB31C31709400C46919 /* uv.h */,
+			);
+			path = include;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -207,14 +245,24 @@
 		8141DAA01C316FF000C46919 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/libuv",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = $SOURCE_ROOT/../libuv/include;
 			};
 			name = Debug;
 		};
 		8141DAA11C316FF000C46919 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/libuv",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = $SOURCE_ROOT/../libuv/include;
 			};
 			name = Release;
 		};
