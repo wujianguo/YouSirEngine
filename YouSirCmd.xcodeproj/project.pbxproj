@@ -8,7 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		8141DA9C1C316FF000C46919 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 8141DA9B1C316FF000C46919 /* main.c */; };
-		8141DAB51C31709400C46919 /* libuv_mac.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8141DAB41C31709400C46919 /* libuv_mac.a */; };
+		815DF0361C321EAE00172269 /* libuv_mac.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 815DF0351C321EAE00172269 /* libuv_mac.a */; };
+		815DF0481C32222D00172269 /* http_parser.c in Sources */ = {isa = PBXBuildFile; fileRef = 815DF0461C32222D00172269 /* http_parser.c */; };
+		815DF04B1C32268E00172269 /* http_server.c in Sources */ = {isa = PBXBuildFile; fileRef = 815DF0491C32268E00172269 /* http_server.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,12 +28,28 @@
 /* Begin PBXFileReference section */
 		8141DA981C316FF000C46919 /* YouSirCmd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = YouSirCmd; sourceTree = BUILT_PRODUCTS_DIR; };
 		8141DA9B1C316FF000C46919 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
-		8141DAA81C31709400C46919 /* tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tree.h; sourceTree = "<group>"; };
-		8141DAAC1C31709400C46919 /* uv-errno.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-errno.h"; sourceTree = "<group>"; };
-		8141DAB01C31709400C46919 /* uv-unix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-unix.h"; sourceTree = "<group>"; };
-		8141DAB11C31709400C46919 /* uv-version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-version.h"; sourceTree = "<group>"; };
-		8141DAB31C31709400C46919 /* uv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uv.h; sourceTree = "<group>"; };
-		8141DAB41C31709400C46919 /* libuv_mac.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libuv_mac.a; sourceTree = "<group>"; };
+		815DF0261C321EAE00172269 /* android-ifaddrs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "android-ifaddrs.h"; sourceTree = "<group>"; };
+		815DF0271C321EAE00172269 /* pthread-fixes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "pthread-fixes.h"; sourceTree = "<group>"; };
+		815DF0281C321EAE00172269 /* stdint-msvc2008.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "stdint-msvc2008.h"; sourceTree = "<group>"; };
+		815DF0291C321EAE00172269 /* tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tree.h; sourceTree = "<group>"; };
+		815DF02A1C321EAE00172269 /* uv-aix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-aix.h"; sourceTree = "<group>"; };
+		815DF02B1C321EAE00172269 /* uv-bsd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-bsd.h"; sourceTree = "<group>"; };
+		815DF02C1C321EAE00172269 /* uv-darwin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-darwin.h"; sourceTree = "<group>"; };
+		815DF02D1C321EAE00172269 /* uv-errno.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-errno.h"; sourceTree = "<group>"; };
+		815DF02E1C321EAE00172269 /* uv-linux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-linux.h"; sourceTree = "<group>"; };
+		815DF02F1C321EAE00172269 /* uv-sunos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-sunos.h"; sourceTree = "<group>"; };
+		815DF0301C321EAE00172269 /* uv-threadpool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-threadpool.h"; sourceTree = "<group>"; };
+		815DF0311C321EAE00172269 /* uv-unix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-unix.h"; sourceTree = "<group>"; };
+		815DF0321C321EAE00172269 /* uv-version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-version.h"; sourceTree = "<group>"; };
+		815DF0331C321EAE00172269 /* uv-win.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "uv-win.h"; sourceTree = "<group>"; };
+		815DF0341C321EAE00172269 /* uv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uv.h; sourceTree = "<group>"; };
+		815DF0351C321EAE00172269 /* libuv_mac.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libuv_mac.a; sourceTree = "<group>"; };
+		815DF0461C32222D00172269 /* http_parser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = http_parser.c; sourceTree = "<group>"; };
+		815DF0471C32222D00172269 /* http_parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http_parser.h; sourceTree = "<group>"; };
+		815DF0491C32268E00172269 /* http_server.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = http_server.c; sourceTree = "<group>"; };
+		815DF04A1C32268E00172269 /* http_server.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http_server.h; sourceTree = "<group>"; };
+		815DF04F1C322A1000172269 /* http_server_defs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = http_server_defs.h; sourceTree = "<group>"; };
+		815DF0551C326BAD00172269 /* queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = queue.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -39,7 +57,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8141DAB51C31709400C46919 /* libuv_mac.a in Frameworks */,
+				815DF0361C321EAE00172269 /* libuv_mac.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -66,6 +84,8 @@
 		8141DA9A1C316FF000C46919 /* YouSirCmd */ = {
 			isa = PBXGroup;
 			children = (
+				815DF0371C321F1E00172269 /* media_server */,
+				815DF0551C326BAD00172269 /* queue.h */,
 				8141DA9B1C316FF000C46919 /* main.c */,
 			);
 			path = YouSirCmd;
@@ -74,31 +94,61 @@
 		8141DAA21C31707C00C46919 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				8141DAA31C31709400C46919 /* libuv */,
+				815DF0231C321EAE00172269 /* libuv */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		8141DAA31C31709400C46919 /* libuv */ = {
+		815DF0231C321EAE00172269 /* libuv */ = {
 			isa = PBXGroup;
 			children = (
-				8141DAA41C31709400C46919 /* include */,
-				8141DAB41C31709400C46919 /* libuv_mac.a */,
+				815DF0241C321EAE00172269 /* mac */,
 			);
 			path = libuv;
 			sourceTree = "<group>";
 		};
-		8141DAA41C31709400C46919 /* include */ = {
+		815DF0241C321EAE00172269 /* mac */ = {
 			isa = PBXGroup;
 			children = (
-				8141DAA81C31709400C46919 /* tree.h */,
-				8141DAAC1C31709400C46919 /* uv-errno.h */,
-				8141DAB01C31709400C46919 /* uv-unix.h */,
-				8141DAB11C31709400C46919 /* uv-version.h */,
-				8141DAB31C31709400C46919 /* uv.h */,
+				815DF0251C321EAE00172269 /* include */,
+				815DF0351C321EAE00172269 /* libuv_mac.a */,
+			);
+			path = mac;
+			sourceTree = "<group>";
+		};
+		815DF0251C321EAE00172269 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				815DF0261C321EAE00172269 /* android-ifaddrs.h */,
+				815DF0271C321EAE00172269 /* pthread-fixes.h */,
+				815DF0281C321EAE00172269 /* stdint-msvc2008.h */,
+				815DF0291C321EAE00172269 /* tree.h */,
+				815DF02A1C321EAE00172269 /* uv-aix.h */,
+				815DF02B1C321EAE00172269 /* uv-bsd.h */,
+				815DF02C1C321EAE00172269 /* uv-darwin.h */,
+				815DF02D1C321EAE00172269 /* uv-errno.h */,
+				815DF02E1C321EAE00172269 /* uv-linux.h */,
+				815DF02F1C321EAE00172269 /* uv-sunos.h */,
+				815DF0301C321EAE00172269 /* uv-threadpool.h */,
+				815DF0311C321EAE00172269 /* uv-unix.h */,
+				815DF0321C321EAE00172269 /* uv-version.h */,
+				815DF0331C321EAE00172269 /* uv-win.h */,
+				815DF0341C321EAE00172269 /* uv.h */,
 			);
 			path = include;
 			sourceTree = "<group>";
+		};
+		815DF0371C321F1E00172269 /* media_server */ = {
+			isa = PBXGroup;
+			children = (
+				815DF0461C32222D00172269 /* http_parser.c */,
+				815DF0471C32222D00172269 /* http_parser.h */,
+				815DF0491C32268E00172269 /* http_server.c */,
+				815DF04A1C32268E00172269 /* http_server.h */,
+				815DF04F1C322A1000172269 /* http_server_defs.h */,
+			);
+			path = media_server;
+			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
 
@@ -156,6 +206,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				815DF04B1C32268E00172269 /* http_server.c in Sources */,
+				815DF0481C32222D00172269 /* http_parser.c in Sources */,
 				8141DA9C1C316FF000C46919 /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -248,9 +300,10 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/libuv",
+					"$(PROJECT_DIR)/libuv/mac",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = $SOURCE_ROOT/../libuv/include;
+				USER_HEADER_SEARCH_PATHS = "";
 			};
 			name = Debug;
 		};
@@ -260,9 +313,10 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/libuv",
+					"$(PROJECT_DIR)/libuv/mac",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = $SOURCE_ROOT/../libuv/include;
+				USER_HEADER_SEARCH_PATHS = "";
 			};
 			name = Release;
 		};
@@ -285,6 +339,7 @@
 				8141DAA11C316FF000C46919 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
