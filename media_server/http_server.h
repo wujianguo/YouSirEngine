@@ -18,10 +18,10 @@ typedef void (*http_session_complete_cb)(http_request *req);
 typedef void (*http_handler_func)(http_request *req, http_response *resp, http_session_complete_cb complete);
 
 typedef struct {
-    char path[128];
-    http_handler_func handler;
-    
     QUEUE node;
+    
+    http_handler_func handler;
+    char path[128];
 } http_handler_setting;
 
 typedef struct {

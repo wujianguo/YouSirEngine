@@ -15,32 +15,68 @@ typedef struct {
     unsigned int idle_timeout;  /* Connection idle timeout in ms. */
     uv_tcp_t tcp_handle;
     uv_loop_t *loop;
+    http_server_config *config;
 } http_server_ctx;
 
 typedef struct {
     uv_getaddrinfo_t getaddrinfo_req;
-    http_server_config config;
+    http_server_config *config;
     http_server_ctx *servers;
     uv_loop_t *loop;
 } http_server_state;
 
+enum http_session_state {
+    s_message_begin,
+    s_url,
+    s_status,
+    s_header_field,
+    s_header_value,
+    s_header_complete,
+    s_body,
+    s_message_complete,
+    s_dead
+};
+
 typedef struct {
     http_request req;
-    
-}http_request_imp;
+
+    http_parser parser;
+    enum http_session_state state;
+    ssize_t result;
+    http_server_ctx *sx;
+} http_request_imp;
+
+static http_request* cast_from(http_request_imp *imp) {
+    return (http_request*)imp;
+}
+
+static http_request_imp* cast_to(http_request *req) {
+    return (http_request_imp*)req;
+}
 
 static int on_message_begin(http_parser *parser) {
+    http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
+    imp->state = s_message_begin;
     return 0;
 }
 
 static int on_url(http_parser *parser, const char *at, size_t length) {
+    http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
+    imp->state = s_url;
     char buf[1024] = {0};
     memcpy(buf, at, length);
     printf("on_url:%s\n", buf);
+    
+    http_parser_url_init(&imp->req.url);
+    http_parser_parse_url(at, length, 1, &imp->req.url);
+    imp->req.url_len = length;
+    imp->req.url_off = at - imp->req.buf;
     return 0;
 }
 
 static int on_status(http_parser *parser, const char *at, size_t length) {
+    http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
+    imp->state = s_status;
     char buf[1024] = {0};
     memcpy(buf, at, length);
     printf("on_status:%s\n", buf);
@@ -48,6 +84,8 @@ static int on_status(http_parser *parser, const char *at, size_t length) {
 }
 
 static int on_header_field(http_parser *parser, const char *at, size_t length) {
+    http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
+    imp->state = s_header_field;
     char buf[1024] = {0};
     memcpy(buf, at, length);
     printf("on_header_field:%s\n", buf);
@@ -55,6 +93,8 @@ static int on_header_field(http_parser *parser, const char *at, size_t length) {
 }
 
 static int on_header_value(http_parser *parser, const char *at, size_t length) {
+    http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
+    imp->state = s_header_value;
     char buf[1024] = {0};
     memcpy(buf, at, length);
     printf("on_header_value:%s\n", buf);
@@ -62,26 +102,28 @@ static int on_header_value(http_parser *parser, const char *at, size_t length) {
 }
 
 static int on_headers_complete(http_parser *parser) {
+    http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
+    imp->state = s_header_complete;
     return 0;
 }
 
 static int on_body(http_parser *parser, const char *at, size_t length) {
+    http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
+    imp->state = s_body;
     char buf[1024] = {0};
     memcpy(buf, at, length);
     printf("on_body:%s\n", buf);
+    
+    if (imp->req.body_off == 0) {
+        imp->req.body_off = at - imp->req.buf;
+    }
+    imp->req.body_len += length;
     return 0;
 }
 
 static int on_message_complete(http_parser *parser) {
-
-    return 0;
-}
-
-static int on_chunk_header(http_parser *parser) {
-    return 0;
-}
-
-static int on_chunk_complete(http_parser *parser) {
+    http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
+    imp->state = s_message_complete;
     return 0;
 }
 
@@ -97,11 +139,13 @@ static struct http_parser_settings parser_setting = {
     /* When on_chunk_header is called, the current chunk length is stored
      * in parser->content_length.
      */
-    on_chunk_header,
-    on_chunk_complete
+    NULL,
+    NULL
 };
 
-static void do_next(http_request *cx);
+static void do_next(http_request *req);
+static enum http_session_state do_http_parser(http_request *req);
+static enum http_session_state do_handler(http_request *req);
 
 static void conn_timer_reset(http_connection *c);
 static void conn_timer_expire(uv_timer_t *handle);
@@ -113,18 +157,81 @@ static void conn_alloc(uv_handle_t *handle, size_t size, uv_buf_t *buf);
 
 
 static void http_request_finish_init(http_request *req, http_server_ctx *sx) {
-    http_parser_init(&req->parser, HTTP_REQUEST);
     req->conn.rdstate = c_stop;
     req->conn.wrstate = c_stop;
     req->conn.idle_timeout = sx->idle_timeout;
     req->conn.loop = sx->loop;
     
+    http_parser_init(&cast_to(req)->parser, HTTP_REQUEST);
+    cast_to(req)->state = s_message_begin;
+    cast_to(req)->result = 0;
+    cast_to(req)->sx = sx;
+    
     CHECK(0 == uv_timer_init(sx->loop, &req->conn.timer_handle));
     conn_read(&req->conn);
 }
 
-static void do_next(http_request *cx) {
+static void do_next(http_request *req) {
+    enum http_session_state new_state;
+    http_request_imp *imp = cast_to(req);
+    ASSERT(imp->state != s_dead);
+    switch (imp->state) {
+        case s_message_begin:
+        case s_url:
+        case s_status:
+        case s_header_field:
+        case s_header_value:
+        case s_header_complete:
+        case s_body:
+            new_state = do_http_parser(req);
+            break;
+        case s_message_complete:
+            new_state = do_handler(req);
+            break;
+        default:
+            UNREACHABLE();
+    }
     
+    imp->state = new_state;
+    
+    if (imp->state == s_message_complete) {
+        new_state = do_handler(req);
+    }
+    
+    if (imp->state == s_dead) {
+        if (DEBUG_CHECKS) {
+            memset(imp, -1, sizeof(*imp));
+        }
+        free(imp);
+    }
+}
+
+static enum http_session_state do_http_parser(http_request *req) {
+    http_request_imp *imp = cast_to(req);
+    http_parser_execute(&imp->parser, &parser_setting, req->buf, imp->result);
+    return imp->state;
+}
+
+static void on_http_handler_complete(http_request *req) {
+    
+}
+
+
+static enum http_session_state do_handler(http_request *req) {
+    http_request_imp *imp = cast_to(req);
+    http_server_ctx *sx = imp->sx;
+    http_server_config *config = sx->config;
+
+    http_handler_setting *handler;
+    QUEUE *q;
+    QUEUE_FOREACH(q, &config->handlers) {
+        handler = QUEUE_DATA(q, http_handler_setting, node);
+        if (strcmp(handler->path, "/") == 0) {
+            handler->handler(req, NULL, on_http_handler_complete);
+        }
+    }
+    
+    return s_message_complete;
 }
 
 
@@ -138,7 +245,7 @@ static void conn_timer_reset(http_connection *conn) {
 static void conn_timer_expire(uv_timer_t *handle) {
     http_connection *c = CONTAINER_OF(handle, http_connection, timer_handle);
     http_request *req = CONTAINER_OF(c, http_request, conn);
-    req->result = UV_ETIMEDOUT;
+    cast_to(req)->result = UV_ETIMEDOUT;
     do_next(req);
 }
 
@@ -155,7 +262,7 @@ static void conn_read_done(uv_stream_t *handle, ssize_t nread, const uv_buf_t *b
     c->rdstate = c_done;
     http_request *req = CONTAINER_OF(c, http_request, conn);
 
-    req->result += nread;
+    cast_to(req)->result += nread;
     
     uv_read_stop(&c->handle.stream);
     do_next(req);
@@ -166,16 +273,19 @@ static void conn_alloc(uv_handle_t *handle, size_t size, uv_buf_t *buf) {
     ASSERT(c->rdstate == c_busy);
 
     http_request *req = CONTAINER_OF(c, http_request, conn);
-    ASSERT(req->result < sizeof(req->buf));
-    buf->base = req->buf + req->result;
-    buf->len = sizeof(req->buf) - req->result;
+    http_request_imp *imp = cast_to(req);
+    ASSERT(imp->result < sizeof(req->buf));
+    buf->base = req->buf + imp->result;
+    buf->len = sizeof(req->buf) - imp->result;
 }
 
 static void on_connection(uv_stream_t *server, int status) {
     CHECK(status == 0);
 
     http_server_ctx *sx = CONTAINER_OF(server, http_server_ctx, tcp_handle);
-    http_request *req = malloc(sizeof(*req));
+    http_request_imp *imp = malloc(sizeof(*imp));
+    memset(imp, 0, sizeof(http_request_imp));
+    http_request *req = cast_from(imp);
     CHECK(0 == uv_tcp_init(sx->loop, &req->conn.handle.tcp));
     CHECK(0 == uv_accept(server, &req->conn.handle.stream));
     http_request_finish_init(req, sx);
@@ -203,10 +313,10 @@ static void do_bind(uv_getaddrinfo_t *req, int status, struct addrinfo *addrs) {
     
     state = CONTAINER_OF(req, http_server_state, getaddrinfo_req);
     loop = state->loop;
-    cf = &state->config;
+    cf = state->config;
     
     if (status < 0) {
-        printf("getaddrinfo(\"%s\"): %s\n", cf->bind_host, uv_strerror(status));
+        YOU_LOG_ERROR("getaddrinfo(\"%s\"): %s", cf->bind_host, uv_strerror(status));
         uv_freeaddrinfo(addrs);
         return;
     }
@@ -222,7 +332,7 @@ static void do_bind(uv_getaddrinfo_t *req, int status, struct addrinfo *addrs) {
     }
     
     if (ipv4_naddrs == 0 && ipv6_naddrs == 0) {
-        printf("%s has no IPv4/6 addresses\n", cf->bind_host);
+        YOU_LOG_ERROR("%s has no IPv4/6 addresses", cf->bind_host);
         uv_freeaddrinfo(addrs);
         return;
     }
@@ -253,7 +363,8 @@ static void do_bind(uv_getaddrinfo_t *req, int status, struct addrinfo *addrs) {
         
         sx = state->servers + n;
         sx->loop = loop;
-        sx->idle_timeout = state->config.idle_timeout;
+        sx->idle_timeout = state->config->idle_timeout;
+        sx->config = state->config;
         CHECK(0 == uv_tcp_init(loop, &sx->tcp_handle));
         
         what = "uv_tcp_bind";
@@ -264,7 +375,7 @@ static void do_bind(uv_getaddrinfo_t *req, int status, struct addrinfo *addrs) {
         }
         
         if (err != 0) {
-            printf("%s(\"%s:%hu\"): %s\n",
+            YOU_LOG_ERROR("%s(\"%s:%hu\"): %s",
                    what,
                    addrbuf,
                    cf->bind_port,
@@ -276,7 +387,7 @@ static void do_bind(uv_getaddrinfo_t *req, int status, struct addrinfo *addrs) {
             break;
         }
         
-        printf("listening on %s:%hu\n", addrbuf, cf->bind_port);
+        YOU_LOG_INFO("listening on %s:%hu", addrbuf, cf->bind_port);
         n += 1;
     }
     
@@ -291,7 +402,7 @@ int http_server_run(const http_server_config *cf, uv_loop_t *loop) {
     
     memset(&state, 0, sizeof(state));
     state.servers = NULL;
-    state.config = *cf;
+    state.config = (http_server_config*)cf;
     state.loop = loop;
     
     /* Resolve the address of the interface that we should bind to.
@@ -309,7 +420,7 @@ int http_server_run(const http_server_config *cf, uv_loop_t *loop) {
                          NULL,
                          &hints);
     if (err != 0) {
-        printf("getaddrinfo: %s\n", uv_strerror(err));
+        YOU_LOG_ERROR("getaddrinfo: %s", uv_strerror(err));
         return err;
     }
     

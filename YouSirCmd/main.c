@@ -21,18 +21,27 @@
 #include "queue.h"
 
 void root_handler(http_request *req, http_response *resp, http_session_complete_cb complete) {
+    YOU_LOG_DEBUG("%s", req->buf);
+    char url[1024] = {0};
+    memcpy(url, req->buf + req->url_off, req->url_len);
+    YOU_LOG_DEBUG("url:%s", url);
     
+    char body[1024] = {0};
+    memcpy(body, req->buf + req->body_off, req->body_len);
+    YOU_LOG_DEBUG("body:%s", body);
 }
 
 void meta_handler(http_request *req, http_response *resp, http_session_complete_cb complete) {
-    
+    YOU_LOG_DEBUG("");    
 }
 
-#define HTTP_SERVER_ADD_HANDLER(queue, path, handler)                   \
+#define HTTP_SERVER_ADD_HANDLER(queue, custom_path, custom_handler)     \
     do {                                                                \
-        http_handler_setting setting = {path, handler, NULL, NULL};     \
+        http_handler_setting setting = {0};                             \
+        strncpy(setting.path, custom_path, sizeof(setting.path));       \
+        setting.handler = custom_handler;                               \
         QUEUE_INIT(&setting.node);                                      \
-        QUEUE_ADD(queue, &setting.node);                                \
+        QUEUE_INSERT_TAIL(queue, &setting.node);                        \
     }                                                                   \
     while(0)
 
@@ -51,7 +60,6 @@ int main(int argc, char **argv) {
     
     HTTP_SERVER_ADD_HANDLER(&config.handlers, "/", root_handler);
     HTTP_SERVER_ADD_HANDLER(&config.handlers, "/meta", meta_handler);
-    
     
     err = http_server_run(&config, uv_default_loop());
     if (err) {

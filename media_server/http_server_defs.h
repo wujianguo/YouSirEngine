@@ -13,6 +13,13 @@
 #include <assert.h>
 #include "http_parser.h"
 
+#include <stdio.h>
+#define YOU_LOG_DEBUG(format, ...)  printf("[debug:%s:%d] " format "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define YOU_LOG_INFO(format, ...)   printf("[info:%s:%d] " format "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define YOU_LOG_WARN(format, ...)   printf("[warn:%s:%d] " format "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define YOU_LOG_ERROR(format, ...)  printf("[error:%s:%d] " format "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
+
+
 /* ASSERT() is for debug checks, CHECK() for run-time sanity checks.
  * DEBUG_CHECKS is for expensive debug checks that we only want to
  * enable in debug builds but still want type-checked by the compiler
@@ -67,9 +74,15 @@ typedef struct {
 
 typedef struct {
     http_connection conn;
-    http_parser parser;
+    
+    unsigned int method;
+    struct http_parser_url url;
+    
+    uint16_t url_off;
+    uint16_t url_len;
+    uint16_t body_off;
+    uint16_t body_len;
     char buf[2048];
-    ssize_t result;
     
 } http_request;
 
