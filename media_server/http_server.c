@@ -49,6 +49,9 @@ typedef struct {
     enum http_session_state state;
     ssize_t result;
     http_server_ctx *sx;
+    
+    char header_field[1024];
+    char header_value[1024];
 } http_request_imp;
 
 static http_request* cast_from(http_request_imp *imp) {
@@ -59,6 +62,72 @@ static http_request_imp* cast_to(http_request *req) {
     return (http_request_imp*)req;
 }
 
+/*
+ *         support             not support
+ *  ----------------------|------------------------------|
+ *  Range: bytes=0-499    | Range: bytes=0-0,-1          |
+ *  Range: bytes=500-999  | Range: bytes=500-600,601-999 |
+ *  Range: bytes=-500     |                              |
+ *  Range: bytes=500-     |                              |
+ */
+static void parse_range_imp(const char *buf, size_t buf_len, int64_t *pos, int64_t *end) {
+    int index, pos_start = 0, pos_end = 0, len_start = 0;
+    for (index = 0; index < buf_len; ++index) {
+        if (buf[index] == '=') {
+            pos_start = index + 1;
+        } else if (buf[index] == '-') {
+            pos_end = index;
+            len_start = index + 1;
+        }
+    }
+    ASSERT(pos_start <= pos_end);
+    ASSERT(pos_end < len_start);
+    ASSERT(buf_len >= len_start);
+    char tmp[1024] = {0};
+    if (pos_start == pos_end) {
+        *pos = -1;
+    } else {
+        strncpy(tmp, buf + pos_start, pos_end - pos_start);
+        *pos = atoll(tmp);
+    }
+
+    if (len_start == buf_len) {
+        *end = -1;
+    } else {
+        strncpy(tmp, buf + len_start, buf_len - len_start);
+        tmp[buf_len - len_start] = '\0';
+        *end = atoll(tmp);
+    }
+}
+
+/*
+// todo: manage test cases
+static void check_range_parser(const char *buf, int64_t pos, int64_t end) {
+    int64_t ret_pos = 0, ret_end = 0;
+    parse_range_imp(buf, strlen(buf), &ret_pos, &ret_end);
+    ASSERT(ret_pos == pos);
+    ASSERT(ret_end == end);
+}
+
+static void range_parser_test_case() {
+    YOU_LOG_DEBUG("%lld", atoll("499"));
+    check_range_parser("bytes=0-499", 0, 499);
+    check_range_parser("bytes=500-999", 500, 999);
+    check_range_parser("bytes=-500", -1, 500);
+    check_range_parser("bytes=500-", 500, -1);
+}
+*/
+
+static void parse_range(http_request_imp *imp) {
+
+    YOU_LOG_DEBUG("%s: %s", imp->header_field, imp->header_value);
+    if (strcmp(imp->header_field, "Range") != 0)
+        return;
+    imp->req.request_range = 1;
+    parse_range_imp(imp->header_value, strlen(imp->header_value), &imp->req.range_pos, &imp->req.range_end);
+}
+
+
 static int on_message_begin(http_parser *parser) {
     http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
     imp->state = s_message_begin;
@@ -68,9 +137,6 @@ static int on_message_begin(http_parser *parser) {
 static int on_url(http_parser *parser, const char *at, size_t length) {
     http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
     imp->state = s_url;
-    char buf[1024] = {0};
-    memcpy(buf, at, length);
-    YOU_LOG_DEBUG("on_url:%s", buf);
     
     http_parser_url_init(&imp->req.url);
     http_parser_parse_url(at, length, 1, &imp->req.url);
@@ -82,32 +148,35 @@ static int on_url(http_parser *parser, const char *at, size_t length) {
 static int on_status(http_parser *parser, const char *at, size_t length) {
     http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
     imp->state = s_status;
-    char buf[1024] = {0};
-    memcpy(buf, at, length);
-    YOU_LOG_DEBUG("on_status:%s", buf);
     return 0;
 }
 
 static int on_header_field(http_parser *parser, const char *at, size_t length) {
     http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
+    if (imp->state == s_header_value) {
+        parse_range(imp);
+        memset(imp->header_field, 0, sizeof(imp->header_field));
+    }
+    
+    // todo: check strncat func
+    strncat(imp->header_field, at, length);
     imp->state = s_header_field;
-    char buf[1024] = {0};
-    memcpy(buf, at, length);
-    YOU_LOG_DEBUG("on_header_field:%s", buf);
     return 0;
 }
 
 static int on_header_value(http_parser *parser, const char *at, size_t length) {
     http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
+    if (imp->state != s_header_value) {
+        memset(imp->header_value, 0, sizeof(imp->header_value));
+    }
+    strncat(imp->header_value, at, length);
     imp->state = s_header_value;
-    char buf[1024] = {0};
-    memcpy(buf, at, length);
-    YOU_LOG_DEBUG("on_header_value:%s", buf);
     return 0;
 }
 
 static int on_headers_complete(http_parser *parser) {
     http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
+    parse_range(imp);
     imp->state = s_header_complete;
     return 0;
 }
@@ -115,9 +184,6 @@ static int on_headers_complete(http_parser *parser) {
 static int on_body(http_parser *parser, const char *at, size_t length) {
     http_request_imp *imp = CONTAINER_OF(parser, http_request_imp, parser);
     imp->state = s_body;
-    char buf[1024] = {0};
-    memcpy(buf, at, length);
-    YOU_LOG_DEBUG("on_body:%s", buf);
     
     if (imp->req.body_off == 0) {
         imp->req.body_off = at - imp->req.buf;

@@ -81,6 +81,9 @@ struct http_request {
     
     // request
     unsigned int method;
+    int request_range;
+    int64_t range_pos;
+    int64_t range_end;
     struct http_parser_url url;
     uint16_t url_off;
     uint16_t url_len;
