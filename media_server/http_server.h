@@ -14,8 +14,7 @@
 #include "http_server_defs.h"
 
 
-typedef void (*http_session_complete_cb)(http_request *req);
-typedef void (*http_handler_func)(http_request *req, http_response *resp, http_session_complete_cb complete);
+typedef void (*http_handler_func)(http_request *req, http_session_complete_cb complete);
 
 typedef struct {
     QUEUE node;
@@ -29,6 +28,7 @@ typedef struct {
     unsigned short bind_port;
     unsigned int idle_timeout;
     
+    http_handler_func not_found_handler;
     QUEUE handlers;
 } http_server_config;
 

@@ -11,6 +11,7 @@
 #include "uv.h"
 #include "http_server_defs.h"
 
+
 typedef struct {
     unsigned int idle_timeout;  /* Connection idle timeout in ms. */
     uv_tcp_t tcp_handle;
@@ -34,6 +35,9 @@ enum http_session_state {
     s_header_complete,
     s_body,
     s_message_complete,
+    s_kill,
+    s_almost_dead_0,    /* Waiting for finalizers to complete. */
+    s_almost_dead_1,    /* Waiting for finalizers to complete. */
     s_dead
 };
 
@@ -41,6 +45,7 @@ typedef struct {
     http_request req;
 
     http_parser parser;
+    size_t parsed_len;
     enum http_session_state state;
     ssize_t result;
     http_server_ctx *sx;
@@ -65,7 +70,7 @@ static int on_url(http_parser *parser, const char *at, size_t length) {
     imp->state = s_url;
     char buf[1024] = {0};
     memcpy(buf, at, length);
-    printf("on_url:%s\n", buf);
+    YOU_LOG_DEBUG("on_url:%s", buf);
     
     http_parser_url_init(&imp->req.url);
     http_parser_parse_url(at, length, 1, &imp->req.url);
@@ -79,7 +84,7 @@ static int on_status(http_parser *parser, const char *at, size_t length) {
     imp->state = s_status;
     char buf[1024] = {0};
     memcpy(buf, at, length);
-    printf("on_status:%s\n", buf);
+    YOU_LOG_DEBUG("on_status:%s", buf);
     return 0;
 }
 
@@ -88,7 +93,7 @@ static int on_header_field(http_parser *parser, const char *at, size_t length) {
     imp->state = s_header_field;
     char buf[1024] = {0};
     memcpy(buf, at, length);
-    printf("on_header_field:%s\n", buf);
+    YOU_LOG_DEBUG("on_header_field:%s", buf);
     return 0;
 }
 
@@ -97,7 +102,7 @@ static int on_header_value(http_parser *parser, const char *at, size_t length) {
     imp->state = s_header_value;
     char buf[1024] = {0};
     memcpy(buf, at, length);
-    printf("on_header_value:%s\n", buf);
+    YOU_LOG_DEBUG("on_header_value:%s", buf);
     return 0;
 }
 
@@ -112,7 +117,7 @@ static int on_body(http_parser *parser, const char *at, size_t length) {
     imp->state = s_body;
     char buf[1024] = {0};
     memcpy(buf, at, length);
-    printf("on_body:%s\n", buf);
+    YOU_LOG_DEBUG("on_body:%s", buf);
     
     if (imp->req.body_off == 0) {
         imp->req.body_off = at - imp->req.buf;
@@ -146,6 +151,10 @@ static struct http_parser_settings parser_setting = {
 static void do_next(http_request *req);
 static enum http_session_state do_http_parser(http_request *req);
 static enum http_session_state do_handler(http_request *req);
+static enum http_session_state do_kill(http_request *req);
+static enum http_session_state do_almost_dead(http_request *req);
+
+static void on_http_handler_complete(http_request *req);
 
 static void conn_timer_reset(http_connection *c);
 static void conn_timer_expire(uv_timer_t *handle);
@@ -154,13 +163,15 @@ static void conn_read_done(uv_stream_t *handle,
                            ssize_t nread,
                            const uv_buf_t *buf);
 static void conn_alloc(uv_handle_t *handle, size_t size, uv_buf_t *buf);
-
+static void conn_close(http_connection *c);
+static void conn_close_done(uv_handle_t *handle);
 
 static void http_request_finish_init(http_request *req, http_server_ctx *sx) {
     req->conn.rdstate = c_stop;
     req->conn.wrstate = c_stop;
     req->conn.idle_timeout = sx->idle_timeout;
     req->conn.loop = sx->loop;
+    req->complete = on_http_handler_complete;
     
     http_parser_init(&cast_to(req)->parser, HTTP_REQUEST);
     cast_to(req)->state = s_message_begin;
@@ -169,6 +180,7 @@ static void http_request_finish_init(http_request *req, http_server_ctx *sx) {
     
     CHECK(0 == uv_timer_init(sx->loop, &req->conn.timer_handle));
     conn_read(&req->conn);
+    YOU_LOG_DEBUG("");
 }
 
 static void do_next(http_request *req) {
@@ -188,6 +200,13 @@ static void do_next(http_request *req) {
         case s_message_complete:
             new_state = do_handler(req);
             break;
+        case s_kill:
+            new_state = do_kill(req);
+            break;
+        case s_almost_dead_0:
+        case s_almost_dead_1:
+            new_state = do_almost_dead(req);
+            break;
         default:
             UNREACHABLE();
     }
@@ -202,20 +221,42 @@ static void do_next(http_request *req) {
         if (DEBUG_CHECKS) {
             memset(imp, -1, sizeof(*imp));
         }
+        YOU_LOG_DEBUG("end");
         free(imp);
     }
 }
 
 static enum http_session_state do_http_parser(http_request *req) {
+    YOU_LOG_DEBUG("");
     http_request_imp *imp = cast_to(req);
-    http_parser_execute(&imp->parser, &parser_setting, req->buf, imp->result);
+    char buf[2048] = {0};
+    memcpy(buf, req->buf, imp->result);
+    YOU_LOG_DEBUG("%s", buf);
+    ASSERT(imp->result >= imp->parsed_len);
+    imp->parsed_len += http_parser_execute(&imp->parser, &parser_setting, req->buf + imp->parsed_len, imp->result - imp->parsed_len);
+    req->conn.rdstate = c_stop;
+    if (imp->state != s_message_complete) {
+        conn_read(&req->conn);
+    }
     return imp->state;
 }
 
 static void on_http_handler_complete(http_request *req) {
+    http_request_imp *imp = cast_to(req);
+    imp->state = s_kill;
+    do_next(req);
     
+    // todo: keep alive
+//    if (http_should_keep_alive(&imp->parser)) {
+//        imp->state = s_message_begin;
+//        req->conn.rdstate = c_stop;
+//        req->conn.wrstate = c_stop;
+//        conn_read(&req->conn);
+//    } else {
+//        imp->state = s_kill;
+//        do_next(req);
+//    }
 }
-
 
 static enum http_session_state do_handler(http_request *req) {
     http_request_imp *imp = cast_to(req);
@@ -226,14 +267,39 @@ static enum http_session_state do_handler(http_request *req) {
     QUEUE *q;
     QUEUE_FOREACH(q, &config->handlers) {
         handler = QUEUE_DATA(q, http_handler_setting, node);
-        if (strcmp(handler->path, "/") == 0) {
-            handler->handler(req, NULL, on_http_handler_complete);
+        if (req->url.field_set & (1 << UF_PATH)) {
+            size_t path_len = strlen(handler->path);
+            if (path_len != req->url.field_data[UF_PATH].len) {
+                continue;
+            }
+            if (strncmp(handler->path, req->buf + req->url_off + req->url.field_data[UF_PATH].off, path_len) == 0) {
+                handler->handler(req, on_http_handler_complete);
+                break;
+            }
         }
     }
     
+    if (q == &config->handlers) {
+        config->not_found_handler(req, on_http_handler_complete);
+    }
+
     return s_message_complete;
 }
 
+static enum http_session_state do_kill(http_request *req) {
+    http_request_imp *imp = cast_to(req);
+    if (imp->state >= s_almost_dead_0) {
+        return imp->state;
+    }
+    conn_close(&req->conn);
+    return s_almost_dead_0;
+}
+
+static enum http_session_state do_almost_dead(http_request *req) {
+    http_request_imp *imp = cast_to(req);
+    ASSERT(imp->state >= s_almost_dead_0);
+    return imp->state + 1;
+}
 
 static void conn_timer_reset(http_connection *conn) {
     CHECK(0 == uv_timer_start(&conn->timer_handle,
@@ -243,6 +309,8 @@ static void conn_timer_reset(http_connection *conn) {
 }
 
 static void conn_timer_expire(uv_timer_t *handle) {
+    YOU_LOG_DEBUG("");
+    ASSERT(0);
     http_connection *c = CONTAINER_OF(handle, http_connection, timer_handle);
     http_request *req = CONTAINER_OF(c, http_request, conn);
     cast_to(req)->result = UV_ETIMEDOUT;
@@ -260,11 +328,13 @@ static void conn_read_done(uv_stream_t *handle, ssize_t nread, const uv_buf_t *b
     http_connection *c = CONTAINER_OF(handle, http_connection, handle);
     ASSERT(c->rdstate == c_busy);
     c->rdstate = c_done;
+    // todo: test rdstate logic
     http_request *req = CONTAINER_OF(c, http_request, conn);
 
     cast_to(req)->result += nread;
     
     uv_read_stop(&c->handle.stream);
+    uv_timer_stop(&c->timer_handle);
     do_next(req);
 }
 
@@ -277,6 +347,25 @@ static void conn_alloc(uv_handle_t *handle, size_t size, uv_buf_t *buf) {
     ASSERT(imp->result < sizeof(req->buf));
     buf->base = req->buf + imp->result;
     buf->len = sizeof(req->buf) - imp->result;
+}
+
+static void conn_close(http_connection *c) {
+    ASSERT(c->rdstate != c_dead);
+    ASSERT(c->wrstate != c_dead);
+    c->rdstate = c_dead;
+    c->wrstate = c_dead;
+    c->timer_handle.data = c;
+    c->handle.handle.data = c;
+    uv_close(&c->handle.handle, conn_close_done);
+    uv_close((uv_handle_t *) &c->timer_handle, conn_close_done);
+}
+
+static void conn_close_done(uv_handle_t *handle) {
+    http_connection *c;
+    
+    c = handle->data;
+    http_request *req = CONTAINER_OF(c, http_request, conn);
+    do_next(req);
 }
 
 static void on_connection(uv_stream_t *server, int status) {
@@ -396,6 +485,7 @@ static void do_bind(uv_getaddrinfo_t *req, int status, struct addrinfo *addrs) {
 
 
 int http_server_run(const http_server_config *cf, uv_loop_t *loop) {
+    ASSERT(cf->not_found_handler != NULL);
     struct addrinfo hints;
     http_server_state state;
     int err;

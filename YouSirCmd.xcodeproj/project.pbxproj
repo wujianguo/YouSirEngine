@@ -11,6 +11,8 @@
 		815DF0361C321EAE00172269 /* libuv_mac.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 815DF0351C321EAE00172269 /* libuv_mac.a */; };
 		815DF0481C32222D00172269 /* http_parser.c in Sources */ = {isa = PBXBuildFile; fileRef = 815DF0461C32222D00172269 /* http_parser.c */; };
 		815DF04B1C32268E00172269 /* http_server.c in Sources */ = {isa = PBXBuildFile; fileRef = 815DF0491C32268E00172269 /* http_server.c */; };
+		815DF05C1C3397D300172269 /* http_async_client.c in Sources */ = {isa = PBXBuildFile; fileRef = 815DF05A1C3397D300172269 /* http_async_client.c */; };
+		815DF0621C33F22000172269 /* media_handler.c in Sources */ = {isa = PBXBuildFile; fileRef = 815DF0601C33F22000172269 /* media_handler.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -50,6 +52,10 @@
 		815DF04A1C32268E00172269 /* http_server.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http_server.h; sourceTree = "<group>"; };
 		815DF04F1C322A1000172269 /* http_server_defs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = http_server_defs.h; sourceTree = "<group>"; };
 		815DF0551C326BAD00172269 /* queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = queue.h; sourceTree = "<group>"; };
+		815DF05A1C3397D300172269 /* http_async_client.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = http_async_client.c; sourceTree = "<group>"; };
+		815DF05B1C3397D300172269 /* http_async_client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http_async_client.h; sourceTree = "<group>"; };
+		815DF0601C33F22000172269 /* media_handler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = media_handler.c; sourceTree = "<group>"; };
+		815DF0611C33F22000172269 /* media_handler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = media_handler.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -87,6 +93,8 @@
 				815DF0371C321F1E00172269 /* media_server */,
 				815DF0551C326BAD00172269 /* queue.h */,
 				8141DA9B1C316FF000C46919 /* main.c */,
+				815DF0601C33F22000172269 /* media_handler.c */,
+				815DF0611C33F22000172269 /* media_handler.h */,
 			);
 			path = YouSirCmd;
 			sourceTree = "<group>";
@@ -146,6 +154,8 @@
 				815DF0491C32268E00172269 /* http_server.c */,
 				815DF04A1C32268E00172269 /* http_server.h */,
 				815DF04F1C322A1000172269 /* http_server_defs.h */,
+				815DF05A1C3397D300172269 /* http_async_client.c */,
+				815DF05B1C3397D300172269 /* http_async_client.h */,
 			);
 			path = media_server;
 			sourceTree = SOURCE_ROOT;
@@ -208,7 +218,9 @@
 			files = (
 				815DF04B1C32268E00172269 /* http_server.c in Sources */,
 				815DF0481C32222D00172269 /* http_parser.c in Sources */,
+				815DF0621C33F22000172269 /* media_handler.c in Sources */,
 				8141DA9C1C316FF000C46919 /* main.c in Sources */,
+				815DF05C1C3397D300172269 /* http_async_client.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -54,6 +54,10 @@ enum http_connection_state {
     c_dead
 };
 
+typedef struct http_request http_request;
+
+typedef void (*http_session_complete_cb)(http_request *req);
+
 typedef struct {
     enum http_connection_state rdstate;
     enum http_connection_state wrstate;
@@ -72,24 +76,28 @@ typedef struct {
     
 } http_connection;
 
-typedef struct {
+struct http_request {
     http_connection conn;
     
+    // request
     unsigned int method;
     struct http_parser_url url;
-    
     uint16_t url_off;
     uint16_t url_len;
     uint16_t body_off;
     uint16_t body_len;
     char buf[2048];
     
-} http_request;
+    http_session_complete_cb complete;
+    void *data; // user data
+} ;
 
-typedef struct {
-    http_connection conn;
-    
-    
-} http_response;
+
+//typedef struct {
+//    http_connection conn;
+//    http_session_complete_cb complete;
+//    void *data;
+//    
+//} http_response;
 
 #endif /* http_server_defs_h */
