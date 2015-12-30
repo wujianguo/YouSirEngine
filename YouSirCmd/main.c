@@ -120,7 +120,7 @@ static void on_timer_expire2(uv_timer_t *handle) {
 }
 
 
-int on_connect(http_async_client* client) {
+static int on_connect(http_async_client* client, void *data) {
     YOU_LOG_DEBUG("");
     const char format[] = "GET /1.json HTTP/1.1\r\n"
     "Host: 127.0.0.1\r\n"
@@ -135,7 +135,7 @@ int on_connect(http_async_client* client) {
 }
 
 
-int on_connect2(http_async_client* client) {
+static int on_connect2(http_async_client* client, void *data) {
     YOU_LOG_DEBUG("");
     const char format[] = "GET /1.json HTTP/1.1\r\n"
         "Host: www.puacg.com\r\n"
@@ -154,37 +154,37 @@ int on_connect2(http_async_client* client) {
     return 0;
 }
 
-int on_message_begin(http_async_client* client) {
+static int on_message_begin(http_async_client* client, void *data) {
     YOU_LOG_DEBUG("");
     return 0;
 }
 
-int on_url(http_async_client* client, const char *at, size_t length) {
+static int on_url(http_async_client* client, const char *at, size_t length, void *data) {
     return 0;
 }
 
-int on_status(http_async_client* client, const char *at, size_t length) {
+static int on_status(http_async_client* client, const char *at, size_t length, void *data) {
     return 0;
 }
 
-int on_header_field(http_async_client* client, const char *at, size_t length) {
+static int on_header_field(http_async_client* client, const char *at, size_t length, void *data) {
     return 0;
 }
 
-int on_header_value(http_async_client* client, const char *at, size_t length) {
+static int on_header_value(http_async_client* client, const char *at, size_t length, void *data) {
     return 0;
 }
 
-int on_headers_complete(http_async_client* client) {
+static int on_headers_complete(http_async_client* client, void *data) {
     return 0;
 }
 
-int on_body(http_async_client* client, const char *at, size_t length) {
+static int on_body(http_async_client* client, const char *at, size_t length, void *data) {
     YOU_LOG_DEBUG("%s", at);
     return 0;
 }
 
-int on_message_complete(http_async_client* client) {
+static int on_message_complete(http_async_client* client, void *data) {
     YOU_LOG_DEBUG("");
     http_async_client_uninit(client);
     return 0;
@@ -208,7 +208,7 @@ static struct http_async_client_settings client_settings = {
 
 static void on_timer_expire(uv_timer_t *handle) {
 
-    http_async_client *client = http_async_client_init(uv_default_loop(), client_settings);
+    http_async_client *client = http_async_client_init(uv_default_loop(), client_settings, NULL);
 //    http_async_client_connect(client, "www.puacg.com", 80);
     http_async_client_connect(client, "127.0.0.1", 9013);
     

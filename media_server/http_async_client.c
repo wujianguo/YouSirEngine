@@ -45,13 +45,15 @@ typedef struct http_async_client {
     
     int callbacking;
     int destroy;
+    
+    void *user_data;
 } http_async_client;
 
 
 static int on_message_begin(http_parser *parser) {
     http_async_client *client = CONTAINER_OF(parser, http_async_client, parser);
     if (client->settings.on_message_begin) {
-        return client->settings.on_message_begin(client);
+        return client->settings.on_message_begin(client, client->user_data);
     }
     return 0;
 }
@@ -59,7 +61,7 @@ static int on_message_begin(http_parser *parser) {
 static int on_url(http_parser *parser, const char *at, size_t length) {
     http_async_client *client = CONTAINER_OF(parser, http_async_client, parser);
     if (client->settings.on_url) {
-        return client->settings.on_url(client, at, length);
+        return client->settings.on_url(client, at, length, client->user_data);
     }
     return 0;
 }
@@ -67,7 +69,7 @@ static int on_url(http_parser *parser, const char *at, size_t length) {
 static int on_status(http_parser *parser, const char *at, size_t length) {
     http_async_client *client = CONTAINER_OF(parser, http_async_client, parser);
     if (client->settings.on_status) {
-        return client->settings.on_status(client, at, length);
+        return client->settings.on_status(client, at, length, client->user_data);
     }
     return 0;
 }
@@ -75,7 +77,7 @@ static int on_status(http_parser *parser, const char *at, size_t length) {
 static int on_header_field(http_parser *parser, const char *at, size_t length) {
     http_async_client *client = CONTAINER_OF(parser, http_async_client, parser);
     if (client->settings.on_header_field) {
-        return client->settings.on_header_field(client, at, length);
+        return client->settings.on_header_field(client, at, length, client->user_data);
     }
     return 0;
 }
@@ -83,7 +85,7 @@ static int on_header_field(http_parser *parser, const char *at, size_t length) {
 static int on_header_value(http_parser *parser, const char *at, size_t length) {
     http_async_client *client = CONTAINER_OF(parser, http_async_client, parser);
     if (client->settings.on_header_value) {
-        return client->settings.on_header_value(client, at, length);
+        return client->settings.on_header_value(client, at, length, client->user_data);
     }
     return 0;
 }
@@ -91,7 +93,7 @@ static int on_header_value(http_parser *parser, const char *at, size_t length) {
 static int on_headers_complete(http_parser *parser) {
     http_async_client *client = CONTAINER_OF(parser, http_async_client, parser);
     if (client->settings.on_headers_complete) {
-        return client->settings.on_headers_complete(client);
+        return client->settings.on_headers_complete(client, client->user_data);
     }
     return 0;
 }
@@ -99,7 +101,7 @@ static int on_headers_complete(http_parser *parser) {
 static int on_body(http_parser *parser, const char *at, size_t length) {
     http_async_client *client = CONTAINER_OF(parser, http_async_client, parser);
     if (client->settings.on_body) {
-        return client->settings.on_body(client, at, length);
+        return client->settings.on_body(client, at, length, client->user_data);
     }
     return 0;
 }
@@ -107,7 +109,7 @@ static int on_body(http_parser *parser, const char *at, size_t length) {
 static int on_message_complete(http_parser *parser) {
     http_async_client *client = CONTAINER_OF(parser, http_async_client, parser);
     if (client->settings.on_message_complete) {
-        return client->settings.on_message_complete(client);
+        return client->settings.on_message_complete(client, client->user_data);
     }
     return 0;
 }
@@ -115,7 +117,7 @@ static int on_message_complete(http_parser *parser) {
 static int on_chunk_header(http_parser *parser) {
     http_async_client *client = CONTAINER_OF(parser, http_async_client, parser);
     if (client->settings.on_chunk_header) {
-        return client->settings.on_chunk_header(client);
+        return client->settings.on_chunk_header(client, client->user_data);
     }
     return 0;
 }
@@ -123,7 +125,7 @@ static int on_chunk_header(http_parser *parser) {
 static int on_chunk_complete(http_parser *parser) {
     http_async_client *client = CONTAINER_OF(parser, http_async_client, parser);
     if (client->settings.on_chunk_complete) {
-        return client->settings.on_chunk_complete(client);
+        return client->settings.on_chunk_complete(client, client->user_data);
     }
     return 0;
 }
@@ -198,7 +200,7 @@ static void on_connect(uv_connect_t* req, int status) {
     ASSERT(client->state == s_connecting);
     client->state = s_connected;
     if (client->settings.on_connect) {
-        client->settings.on_connect(client);
+        client->settings.on_connect(client, client->user_data);
     }
 }
 
@@ -223,9 +225,10 @@ static void on_get_addrinfo(uv_getaddrinfo_t *req, int status, struct addrinfo *
     uv_tcp_connect(&client->t.connect_req, &client->conn.handle.tcp, &client->t.addr, on_connect);
 }
 
-http_async_client* http_async_client_init(uv_loop_t *loop, struct http_async_client_settings settings) {
+http_async_client* http_async_client_init(uv_loop_t *loop, struct http_async_client_settings settings, void *data) {
     http_async_client *client = (http_async_client*)malloc(sizeof(http_async_client));
     memset(client, 0, sizeof(http_async_client));
+    client->user_data = data;
     client->state = s_idle;
     client->settings = settings;
     http_parser_init(&client->parser, HTTP_RESPONSE);

@@ -11,6 +11,6 @@
 
 #include "http_server_defs.h"
 
-void media_handler(http_request *req, http_session_complete_cb complete);
+void handler_media(http_request *req, http_session_complete_cb complete);
 
 #endif /* media_handler_h */

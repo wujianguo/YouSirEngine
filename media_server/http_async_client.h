@@ -15,8 +15,8 @@
 
 typedef struct http_async_client http_async_client;
 
-typedef int (*http_async_client_data_cb) (http_async_client*, const char *at, size_t length);
-typedef int (*http_async_client_cb) (http_async_client*);
+typedef int (*http_async_client_data_cb) (http_async_client*, const char *at, size_t length, void *data);
+typedef int (*http_async_client_cb) (http_async_client*, void *data);
 
 struct http_async_client_settings {
     http_async_client_cb      on_connect;
@@ -35,7 +35,7 @@ struct http_async_client_settings {
     http_async_client_cb      on_chunk_complete;
 };
 
-http_async_client* http_async_client_init(uv_loop_t *loop, struct http_async_client_settings settings);
+http_async_client* http_async_client_init(uv_loop_t *loop, struct http_async_client_settings settings, void *data);
 
 int http_async_client_connect(http_async_client *client, const char host[MAX_HOST_LEN], unsigned short port);
 
