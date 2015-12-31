@@ -53,6 +53,7 @@
 #define MAX_URL_LEN 1024
 #define MAX_HTTP_FIELD_LEN 56
 #define MAX_HTTP_VALUE_LEN 1024
+#define MAX_REQUEST_HEADER_LEN 2048
 
 typedef struct http_connection http_connection;
 

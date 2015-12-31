@@ -176,13 +176,22 @@ static struct http_connection_settings settings = {
     on_message_complete
 };
 
+
+
 static void on_timer_expire(uv_timer_t *handle) {
-    http_connection *conn = create_http_connection(handle->loop, settings, NULL);
-    http_connection_connect(conn, "www.puacg.com", 80);
+//    http_connection *conn = create_http_connection(handle->loop, settings, NULL);
+//    http_connection_connect(conn, "www.puacg.com", 80);
     
     http_connection *conn2 = create_http_connection(handle->loop, settings, (void*)1);
-    http_connection_connect(conn2, "127.0.0.1", 9013);
+    http_connection_connect(conn2, "127.0.0.1", 9809);
 }
+
+void on_you_parser_ready(int port) {
+    YOU_LOG_DEBUG("%d", port);
+    uv_timer_init(uv_default_loop(), &timer_handle);
+    uv_timer_start(&timer_handle, on_timer_expire, 1000, 0);
+}
+
 
 static void test_client() {
     uv_timer_init(uv_default_loop(), &timer_handle);
@@ -190,7 +199,7 @@ static void test_client() {
 }
 
 #include "media_handler.h"
-
+#include "you_parser.h"
 int main(int argc, char **argv) {
 
     http_server_config config;
@@ -207,8 +216,8 @@ int main(int argc, char **argv) {
     HTTP_SERVER_ADD_HANDLER(&config.handlers, "/meta", meta_handler);
     HTTP_SERVER_ADD_HANDLER(&config.handlers, "/media", media_handler);
     
-    
-    test_client();
+    start_you_parser(uv_default_loop(), "http://127.0.0.1:8000/", 9809, on_you_parser_ready);
+
     err = http_server_run(&config, uv_default_loop());
     if (err) {
         exit(1);

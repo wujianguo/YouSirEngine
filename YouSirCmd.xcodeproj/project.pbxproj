@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8130E7DC1C35359D0032052D /* you_parser.c in Sources */ = {isa = PBXBuildFile; fileRef = 8130E7DA1C35359D0032052D /* you_parser.c */; };
+		8130E7DE1C353E170032052D /* libpython.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 8130E7DD1C353E170032052D /* libpython.tbd */; };
 		8141DA9C1C316FF000C46919 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 8141DA9B1C316FF000C46919 /* main.c */; };
 		815DF0361C321EAE00172269 /* libuv_mac.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 815DF0351C321EAE00172269 /* libuv_mac.a */; };
 		815DF0481C32222D00172269 /* http_parser.c in Sources */ = {isa = PBXBuildFile; fileRef = 815DF0461C32222D00172269 /* http_parser.c */; };
@@ -29,6 +31,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8130E7DA1C35359D0032052D /* you_parser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = you_parser.c; sourceTree = "<group>"; };
+		8130E7DB1C35359D0032052D /* you_parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = you_parser.h; sourceTree = "<group>"; };
+		8130E7DD1C353E170032052D /* libpython.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libpython.tbd; path = usr/lib/libpython.tbd; sourceTree = SDKROOT; };
 		8141DA981C316FF000C46919 /* YouSirCmd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = YouSirCmd; sourceTree = BUILT_PRODUCTS_DIR; };
 		8141DA9B1C316FF000C46919 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		815DF0261C321EAE00172269 /* android-ifaddrs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "android-ifaddrs.h"; sourceTree = "<group>"; };
@@ -65,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8130E7DE1C353E170032052D /* libpython.tbd in Frameworks */,
 				815DF0361C321EAE00172269 /* libuv_mac.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -97,6 +103,8 @@
 				8141DA9B1C316FF000C46919 /* main.c */,
 				815DF06C1C3502CD00172269 /* media_handler.c */,
 				815DF06D1C3502CD00172269 /* media_handler.h */,
+				8130E7DA1C35359D0032052D /* you_parser.c */,
+				8130E7DB1C35359D0032052D /* you_parser.h */,
 			);
 			path = YouSirCmd;
 			sourceTree = "<group>";
@@ -104,6 +112,7 @@
 		8141DAA21C31707C00C46919 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				8130E7DD1C353E170032052D /* libpython.tbd */,
 				815DF0231C321EAE00172269 /* libuv */,
 			);
 			name = Frameworks;
@@ -223,6 +232,7 @@
 				815DF06E1C3502CD00172269 /* media_handler.c in Sources */,
 				815DF0651C34BBA400172269 /* http_connection.c in Sources */,
 				815DF0681C34CD1700172269 /* utility.c in Sources */,
+				8130E7DC1C35359D0032052D /* you_parser.c in Sources */,
 				815DF0481C32222D00172269 /* http_parser.c in Sources */,
 				8141DA9C1C316FF000C46919 /* main.c in Sources */,
 			);
