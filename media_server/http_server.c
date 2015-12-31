@@ -141,6 +141,7 @@ static void on_connection(uv_stream_t *server, int status) {
     imp->sx = sx;
     imp->req.conn = create_passive_http_connection(server, settings, imp);
     imp->req.complete = on_sess_complete;
+    imp->req.loop = server->loop;
 }
 
 /* Bind a server to each address that getaddrinfo() reported. */

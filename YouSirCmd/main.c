@@ -123,7 +123,6 @@ static void on_timer_expire2(uv_timer_t *handle) {
     "Accept-Language: zh-CN,zh;q=0.8,en-US;q=0.6,en;q=0.4\r\n"
     "\r\n";
     http_connection_send(conn, format, strlen(format));
-
 }
 
 static void on_connect(http_connection *conn, void *user_data) {
@@ -190,6 +189,7 @@ static void test_client() {
     uv_timer_start(&timer_handle, on_timer_expire, 1000, 0);
 }
 
+#include "media_handler.h"
 
 int main(int argc, char **argv) {
 
@@ -205,6 +205,8 @@ int main(int argc, char **argv) {
     
     HTTP_SERVER_ADD_HANDLER(&config.handlers, "/", root_handler);
     HTTP_SERVER_ADD_HANDLER(&config.handlers, "/meta", meta_handler);
+    HTTP_SERVER_ADD_HANDLER(&config.handlers, "/media", media_handler);
+    
     
     test_client();
     err = http_server_run(&config, uv_default_loop());

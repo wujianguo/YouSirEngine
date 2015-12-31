@@ -20,6 +20,7 @@ typedef void (*http_session_complete_cb)(http_request *req);
 typedef struct http_request {
     http_connection *conn;
     struct http_header *header;
+    uv_loop_t *loop;
     
     http_session_complete_cb complete;
     void *user_data; // user data

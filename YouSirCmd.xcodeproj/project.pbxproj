@@ -13,6 +13,7 @@
 		815DF04B1C32268E00172269 /* http_server.c in Sources */ = {isa = PBXBuildFile; fileRef = 815DF0491C32268E00172269 /* http_server.c */; };
 		815DF0651C34BBA400172269 /* http_connection.c in Sources */ = {isa = PBXBuildFile; fileRef = 815DF0631C34BBA400172269 /* http_connection.c */; };
 		815DF0681C34CD1700172269 /* utility.c in Sources */ = {isa = PBXBuildFile; fileRef = 815DF0661C34CD1700172269 /* utility.c */; };
+		815DF06E1C3502CD00172269 /* media_handler.c in Sources */ = {isa = PBXBuildFile; fileRef = 815DF06C1C3502CD00172269 /* media_handler.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -55,6 +56,8 @@
 		815DF0641C34BBA400172269 /* http_connection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http_connection.h; sourceTree = "<group>"; };
 		815DF0661C34CD1700172269 /* utility.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = utility.c; sourceTree = "<group>"; };
 		815DF0671C34CD1700172269 /* utility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = utility.h; sourceTree = "<group>"; };
+		815DF06C1C3502CD00172269 /* media_handler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = media_handler.c; sourceTree = "<group>"; };
+		815DF06D1C3502CD00172269 /* media_handler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = media_handler.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -92,6 +95,8 @@
 				815DF0371C321F1E00172269 /* media_server */,
 				815DF0551C326BAD00172269 /* queue.h */,
 				8141DA9B1C316FF000C46919 /* main.c */,
+				815DF06C1C3502CD00172269 /* media_handler.c */,
+				815DF06D1C3502CD00172269 /* media_handler.h */,
 			);
 			path = YouSirCmd;
 			sourceTree = "<group>";
@@ -215,6 +220,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				815DF04B1C32268E00172269 /* http_server.c in Sources */,
+				815DF06E1C3502CD00172269 /* media_handler.c in Sources */,
 				815DF0651C34BBA400172269 /* http_connection.c in Sources */,
 				815DF0681C34CD1700172269 /* utility.c in Sources */,
 				815DF0481C32222D00172269 /* http_parser.c in Sources */,
