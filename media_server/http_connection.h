@@ -1,17 +1,13 @@
 //
-//  http_server_defs.h
+//  http_connection.h
 //  YouSirCmd
 //
-//  Created by 吴建国 on 15/12/29.
+//  Created by 吴建国 on 15/12/31.
 //  Copyright © 2015年 wujianguo. All rights reserved.
 //
 
-#ifndef http_server_defs_h
-#define http_server_defs_h
-
-#include "uv.h"
-#include <assert.h>
-#include "http_parser.h"
+#ifndef http_connection_h
+#define http_connection_h
 
 #include <stdio.h>
 #define YOU_LOG_DEBUG(format, ...)  printf("[debug:%s:%d] " format "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
@@ -20,6 +16,7 @@
 #define YOU_LOG_ERROR(format, ...)  printf("[error:%s:%d] " format "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
 
 
+#include <assert.h>
 /* ASSERT() is for debug checks, CHECK() for run-time sanity checks.
  * DEBUG_CHECKS is for expensive debug checks that we only want to
  * enable in debug builds but still want type-checked by the compiler
@@ -47,60 +44,50 @@
 ((type *) ((char *) (ptr) - ((char *) &((type *) 0)->field)))
 
 
-enum http_connection_state {
-    c_busy,  /* Busy; waiting for incoming data or for a write to complete. */
-    c_done,  /* Done; read incoming data or write finished. */
-    c_stop,  /* Stopped. */
-    c_dead
+#include "uv.h"
+#include "http_parser.h"
+#include "queue.h"
+
+
+#define MAX_HOST_LEN 128
+#define MAX_URL_LEN 1024
+#define MAX_HTTP_FIELD_LEN 56
+#define MAX_HTTP_VALUE_LEN 1024
+
+typedef struct http_connection http_connection;
+
+struct http_header_field_value {
+    char field[MAX_HTTP_FIELD_LEN];
+    char value[MAX_HTTP_VALUE_LEN];
+    
+    QUEUE node;
 };
 
-typedef struct http_request http_request;
-
-typedef void (*http_session_complete_cb)(http_request *req);
-
-typedef struct {
-    enum http_connection_state rdstate;
-    enum http_connection_state wrstate;
-    unsigned int idle_timeout;
-    
-    uv_timer_t timer_handle;  /* For detecting timeouts. */
-    uv_write_t write_req;
-    
-    union {
-        uv_handle_t handle;
-        uv_stream_t stream;
-        uv_tcp_t tcp;
-        uv_udp_t udp;
-    } handle;
-    uv_loop_t *loop;
-    
-} http_connection;
-
-struct http_request {
-    http_connection conn;
-    
-    // request
-    unsigned int method;
-    int request_range;
-    int64_t range_pos;
-    int64_t range_end;
+struct http_header {
+    http_parser parser;
     struct http_parser_url url;
-    uint16_t url_off;
-    uint16_t url_len;
-    uint16_t body_off;
-    uint16_t body_len;
-    char buf[2048];
+    char url_buf[MAX_URL_LEN];
     
-    http_session_complete_cb complete;
-    void *data; // user data
-} ;
+    QUEUE headers;
+};
+
+struct http_connection_settings {
+    void (*on_connect)(http_connection *conn, void *user_data);
+    void (*on_send)(http_connection *conn, void *user_data);
+    void (*on_header_complete)(http_connection *conn, struct http_header *header, void *user_data);
+    void (*on_body)(http_connection *conn, const char *at, size_t length, void *user_data);
+    void (*on_message_complete)(http_connection *conn, void *user_data);
+};
+
+http_connection* create_http_connection(uv_loop_t *loop, struct http_connection_settings settings, void *user_data);
+
+http_connection* create_passive_http_connection(uv_stream_t *server, struct http_connection_settings settings, void *user_data);
+
+int http_connection_connect(http_connection *conn, const char host[MAX_HOST_LEN], unsigned short port);
+
+int http_connection_send(http_connection *conn, const char *buf, size_t len);
+
+void free_http_connection(http_connection *conn);
 
 
-//typedef struct {
-//    http_connection conn;
-//    http_session_complete_cb complete;
-//    void *data;
-//    
-//} http_response;
-
-#endif /* http_server_defs_h */
+#endif /* http_connection_h */

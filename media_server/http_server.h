@@ -11,16 +11,31 @@
 
 #include "uv.h"
 #include "queue.h"
-#include "http_server_defs.h"
+#include "http_connection.h"
+
+typedef struct http_request http_request;
+
+typedef void (*http_session_complete_cb)(http_request *req);
+
+typedef struct http_request {
+    http_connection *conn;
+    struct http_header *header;
+    
+    http_session_complete_cb complete;
+    void *user_data; // user data
+} http_request;
 
 
-typedef void (*http_handler_func)(http_request *req, http_session_complete_cb complete);
+typedef void (*handler_callback)(http_request *req);
+typedef void (*handler_callback_data)(http_request *req, const char *at, size_t length);
 
 typedef struct {
-    QUEUE node;
-    
-    http_handler_func handler;
+    handler_callback on_header_complete;
+    handler_callback_data on_body;
+    handler_callback on_message_complete;
+    handler_callback on_send;
     char path[128];
+    QUEUE node;
 } http_handler_setting;
 
 typedef struct {
@@ -28,7 +43,6 @@ typedef struct {
     unsigned short bind_port;
     unsigned int idle_timeout;
     
-    http_handler_func not_found_handler;
     QUEUE handlers;
 } http_server_config;
 
